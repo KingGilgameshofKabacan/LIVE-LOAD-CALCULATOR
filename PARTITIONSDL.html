@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SDL Calculator (NSCP 2015)</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Use Inter font */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom styles for number input arrows */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+        /* Hide content by default */
+        .calc-content {
+            display: none;
+        }
+        /* Show active content */
+        .calc-content.active {
+            display: block;
+        }
+        /* Style for the main result values */
+        .main-result {
+            @apply font-bold text-3xl text-green-400;
+        }
+        .result-breakdown {
+            @apply text-sm text-gray-400 mt-2;
+        }
+    </style>
+    <!-- Load Inter font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-gray-100 p-4 md:p-8">
+
+    <div class="max-w-2xl mx-auto">
+        
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-2xl md:text-3xl font-bold text-blue-400">Partition SDL Calculator</h1>
+            <p class="text-sm text-gray-400 mt-2">Based on NSCP 2015, Tables 204-1 & 204-2</p>
+        </header>
+
+        <!-- Tab Navigation -->
+        <div class="flex mb-6 rounded-lg bg-gray-800 p-1">
+            <button data-target="chb" class="tab-btn flex-1 p-3 rounded-md font-semibold text-sm transition-colors duration-200">
+                CHB Wall
+            </button>
+            <button data-target="glass" class="tab-btn flex-1 p-3 rounded-md font-semibold text-sm transition-colors duration-200">
+                Glass Partition
+            </button>
+        </div>
+
+        <!-- Calculator Content -->
+        <div class="bg-gray-800 p-6 rounded-lg shadow-2xl">
+
+            <!-- CHB Wall Calculator -->
+            <div id="chb" class="calc-content space-y-6">
+                <h2 class="text-xl font-bold text-green-400 border-b border-gray-700 pb-3">CHB Wall Load</h2>
+                
+                <!-- CHB Inputs -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="chb-type" class="block text-sm font-medium text-gray-300 mb-1">CHB Type (from NSCP 204-2)</label>
+                        <select id="chb-type" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white focus:ring-blue-500 focus:border-blue-500">
+                            <!-- Values are unplastered pressure in kPa -->
+                            <option value="1.39">100mm CHB (Ungrouted)</option>
+                            <option value="1.82">150mm CHB (Ungrouted)</option>
+                            <option value="2.11">200mm CHB (Ungrouted)</option>
+                            <option value="2.44">100mm CHB (Fully Grouted)</option>
+                            <option value="3.30">150mm CHB (Fully Grouted)</option>
+                            <option value="4.12">200mm CHB (Fully Grouted)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="chb-plaster" class="block text-sm font-medium text-gray-300 mb-1">Plastering (13mm)</label>
+                        <select id="chb-plaster" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white focus:ring-blue-500 focus:border-blue-500">
+                            <option value="0">None</option>
+                            <option value="1">1 Side</option>
+                            <option value="2">2 Sides</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="chb-height" class="block text-sm font-medium text-gray-300 mb-1">Wall Height (m)</label>
+                        <input type="number" id="chb-height" value="3.0" step="0.1" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+                
+                <!-- CHB Result -->
+                <div class="pt-6 border-t border-gray-700 text-center">
+                    <label class="block text-sm font-medium text-gray-300">Total SDL (Line Load on Beam/Slab)</label>
+                    <div class="main-result mt-1">
+                        <span id="chb-result">0.00</span> kN/m
+                    </div>
+                    <div class="result-breakdown">
+                        (<span id="chb-result-pressure">0.00</span> kPa Total Pressure) &times; (<span id="chb-result-height">0.00</span> m Height)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Glass Partition Calculator -->
+            <div id="glass" class="calc-content space-y-6">
+                <h2 class="text-xl font-bold text-green-400 border-b border-gray-700 pb-3">Glass Partition Load</h2>
+                
+                <!-- Glass Inputs -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="glass-thickness" class="block text-sm font-medium text-gray-300 mb-1">Glass Thickness (mm)</label>
+                        <input type="number" id="glass-thickness" value="10" step="1" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="glass-frame" class="block text-sm font-medium text-gray-300 mb-1">Framing Type</label>
+                        <select id="glass-frame" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white focus:ring-blue-500 focus:border-blue-500">
+                            <!-- Values are frame pressure in kPa -->
+                            <option value="0.10">Light Frame (e.g., Aluminum)</option>
+                            <option value="0.25">Heavy Frame (e.g., Steel)</option>
+                            <option value="0.0">Frameless (Hardware only)</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="glass-height" class="block text-sm font-medium text-gray-300 mb-1">Partition Height (m)</label>
+                        <input type="number" id="glass-height" value="3.0" step="0.1" class="w-full bg-gray-700 border border-gray-600 rounded-md p-2 text-white focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+
+                <!-- Glass Result -->
+                <div class="pt-6 border-t border-gray-700 text-center">
+                    <label class="block text-sm font-medium text-gray-300">Total SDL (Line Load on Beam/Slab)</label>
+                    <div class="main-result mt-1">
+                        <span id="glass-result">0.00</span> kN/m
+                    </div>
+                    <div class="result-breakdown">
+                        (<span id="glass-result-pressure">0.00</span> kPa Total Pressure) &times; (<span id="glass-result-height">0.00</span> m Height)
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- /Calculator Content -->
+        
+        <!-- Disclaimer -->
+        <div class="mt-6 text-center">
+            <p class="text-xs text-gray-500">
+                <strong>Disclaimer:</strong> This tool is for educational purposes. Values are based on common interpretations of NSCP 2015 Tables 204-1 and 204-2. Always verify calculations with a qualified structural engineer.
+            </p>
+        </div>
+
+    </div> <!-- /Max-width container -->
+
+    <script>
+        // --- Constants from NSCP 2015 ---
+        const PLASTER_PRESSURE_KPA = 0.31; // For 13mm cement plaster (Table 204-2)
+        const GLASS_PRESSURE_PER_MM_KPA = 0.025; // (Table 204-1, 24 kN/m³ * 0.001 m = 0.024, rounded)
+
+        // --- Get Elements ---
+        const tabs = document.querySelectorAll('.tab-btn');
+        const contents = document.querySelectorAll('.calc-content');
+        
+        // CHB Elements
+        const chbType = document.getElementById('chb-type');
+        const chbPlaster = document.getElementById('chb-plaster');
+        const chbHeight = document.getElementById('chb-height');
+        const chbResult = document.getElementById('chb-result');
+        const chbResultPressure = document.getElementById('chb-result-pressure');
+        const chbResultHeight = document.getElementById('chb-result-height');
+
+        // Glass Elements
+        const glassThickness = document.getElementById('glass-thickness');
+        const glassFrame = document.getElementById('glass-frame');
+        const glassHeight = document.getElementById('glass-height');
+        const glassResult = document.getElementById('glass-result');
+        const glassResultPressure = document.getElementById('glass-result-pressure');
+        const glassResultHeight = document.getElementById('glass-result-height');
+
+        // --- Tab Switching Logic ---
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const target = tab.getAttribute('data-target');
+
+                // Update tab styles
+                tabs.forEach(t => {
+                    t.classList.remove('bg-blue-600', 'text-white');
+                    t.classList.add('text-gray-300', 'bg-gray-800', 'hover:bg-gray-700');
+                });
+                tab.classList.add('bg-blue-600', 'text-white');
+                tab.classList.remove('text-gray-300', 'bg-gray-800', 'hover:bg-gray-700');
+                
+                // Show/hide content
+                contents.forEach(content => {
+                    if (content.id === target) {
+                        content.classList.add('active');
+                    } else {
+                        content.classList.remove('active');
+                    }
+                });
+            });
+        });
+
+        // --- Calculation Functions ---
+
+        function calculateCHB() {
+            const chbPressure = parseFloat(chbType.value) || 0;
+            const plasterSides = parseFloat(chbPlaster.value) || 0;
+            const height = parseFloat(chbHeight.value) || 0;
+
+            const totalPlasterPressure = plasterSides * PLASTER_PRESSURE_KPA;
+            const totalPressure = chbPressure + totalPlasterPressure;
+            const lineLoad = totalPressure * height;
+
+            // Update UI
+            chbResult.textContent = isNaN(lineLoad) ? '---' : lineLoad.toFixed(2);
+            chbResultPressure.textContent = isNaN(totalPressure) ? '---' : totalPressure.toFixed(2);
+            chbResultHeight.textContent = isNaN(height) ? '---' : height.toFixed(2);
+        }
+
+        function calculateGlass() {
+            const thickness = parseFloat(glassThickness.value) || 0;
+            const framePressure = parseFloat(glassFrame.value) || 0;
+            const height = parseFloat(glassHeight.value) || 0;
+
+            const glassPressure = thickness * GLASS_PRESSURE_PER_MM_KPA;
+            const totalPressure = glassPressure + framePressure;
+            const lineLoad = totalPressure * height;
+
+            // Update UI
+            glassResult.textContent = isNaN(lineLoad) ? '---' : lineLoad.toFixed(2);
+            glassResultPressure.textContent = isNaN(totalPressure) ? '---' : totalPressure.toFixed(3); // More precision for glass
+            glassResultHeight.textContent = isNaN(height) ? '---' : height.toFixed(2);
+        }
+
+        // --- Event Listeners for Calculation ---
+        const chbInputs = [chbType, chbPlaster, chbHeight];
+        chbInputs.forEach(input => input.addEventListener('input', calculateCHB));
+
+        const glassInputs = [glassThickness, glassFrame, glassHeight];
+        glassInputs.forEach(input => input.addEventListener('input', calculateGlass));
+
+        // --- Initial Setup ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set initial tab
+            tabs[0].click();
+            
+            // Run initial calculations
+            calculateCHB();
+            calculateGlass();
+        });
+
+    </script>
+</body>
+</html>
